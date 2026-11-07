@@ -1,38 +1,50 @@
 #pragma once
 #include "sdk/vestige.h"
+#include "Engine.h"
 
-class Hydroampf;
-
-// Native Win32/GDI editor laid out like the reference design: big center
-// "macro" knob, four A/B/C/D preset buttons with a mode label, a live
-// reduction meter bar, and two small knobs (Mix / Ceiling) - all in the
-// Hydroampf green theme built around #0EBA90.
+// Win32 + GDI+ (anti-aliased) editor, shared by the VST2 and CLAP wrappers.
+// Light hardware-style box (aspect ~1.16:1): black glass screen with an analog glowing VU needle (output power)
+// and a faint waveform, one big AMOUNT knob with dotted scale, and four tactile A-B-C-D keys.
 class HydroampfEditor
 {
 public:
-    explicit HydroampfEditor(Hydroampf* owner);
+    typedef void (*ParamSetter)(void* user, int index, float normalised);
+
+    HydroampfEditor(Engine* engine, ParamSetter setter, void* user);
     ~HydroampfEditor();
 
+    static constexpr int kWidth = 470, kHeight = 404;
     static intptr_t getRect(ERect** rect);
+
     intptr_t open(void* parentWindow);
     void close();
-    void idle();
+    void idle() {}
 
 #if defined(_WIN32)
     intptr_t wndProc(void* hwnd, unsigned msg, uintptr_t wParam, intptr_t lParam);
 #endif
 
 private:
-    Hydroampf* plugin;
+    Engine* eng;
+    ParamSetter setParam;
+    void* setUser;
     void* hwnd = nullptr;
+    void* fontFamily = nullptr;     // Gdiplus::FontFamily*, created in open(), freed in close()
 
-    // -1 = nothing, 0 = big knob, 1 = mix knob, 2 = ceiling knob
-    int   draggingKnob = -1;
-    float dragStartY = 0.0f;
-    float dragStartVal = 0.0f;
+    int   dragParam = -1;           // engine param being dragged
+    float dragStartY = 0, dragStartVal = 0;
+    int   hover = -1;               // 0..3 params, 10+mode pad, 20/21 mode arrows
+    bool  tracking = false;
+
+    // display state (UI thread only)
+    double dispHead = 0.0;
+    long long lastTick = 0;
+    float meterIn = -90.f, meterOut = -90.f, meterGr = 0.f, needle = -60.f;
 
     void paint();
-    void handleMouseDown(int x, int y);
-    void handleMouseMove(int x, int y);
-    void handleMouseUp();
+    void mouseDown(int x, int y, bool dbl);
+    void mouseMove(int x, int y, bool shift);
+    void mouseUp();
+    void wheel(int x, int y, int delta);
+    int  hit(int x, int y) const;
 };

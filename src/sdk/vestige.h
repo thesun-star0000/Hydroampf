@@ -115,6 +115,17 @@ enum VstEffectOpcodes
     effGetVendorVersion = 49,
     effCanDo = 51,
     effGetVstVersion = 58,
+    effGetProgramNameIndexed = 29,
+    effGetInputProperties = 33,
+    effGetOutputProperties = 34,
+    effSetBypass = 44,
+    effGetTailSize = 52,
+    effGetParameterProperties = 56,
+    effBeginSetProgram = 67,
+    effEndSetProgram = 68,
+    effStartProcess = 71,
+    effStopProcess = 72,
+    effSetProcessPrecision = 77,
 };
 
 // ---- Plugin -> Host opcodes -------------------------------------------
